@@ -1,0 +1,27 @@
+#!/bin/bash
+
+log () {
+  echo "---> $@"
+}
+
+configure () {
+	if [[ ! -f /etc/.configured ]]
+	then
+    export LDAP_BASE=${LDAP_BASE}
+    export LDAP_HOST=${LDAP_HOST}
+    export LDAP_BIND_DN=${LDAP_BIND_DN}
+    export LDAP_BIND_PWD=${LDAP_BIND_PWD}
+    log "Setting up SSHD configuration"
+	  echo "$LDAP_BIND_PWD" > /etc/ldap.secret && chmod 600 /etc/ldap.secret
+		cat /etc/ldap.conf.tpl | envsubst > /etc/ldap.conf
+    touch /etc/.configured
+	fi
+}
+
+start_nscd () {
+	exec /usr/sbin/nscd -d > /dev/stdout 2> /dev/stderr &
+}
+
+configure
+start_nscd
+exec $@
